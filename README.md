@@ -32,6 +32,7 @@ Use branches for your individual implementations, then we can merge them in a `d
   - do odds change over time? will we need/should we poll for changes?
 - automate token generation/refreshing
 - investigate what 3rd party static data would be useful to influence what odds to fetch, (game schedules, etc)
+
 Odds Investigation Breakdown:
  -List of sports on website. Also see document shared by Ryan on 10/25
  -Can do championship odds, as well game odds for each team. Can do h2h and spread
@@ -45,6 +46,7 @@ Odds Jobs Breakdown:
       -Ensure specification for each game, as well as related info
       -Ensure connection between game, oddsmaker, and odds
      -Eventually push to DB when that happens
+     
 ---
 
 ## Integration Hell
