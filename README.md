@@ -33,12 +33,13 @@ Use branches for your individual implementations, then we can merge them in a `d
 - automate token generation/refreshing
 - investigate what 3rd party static data would be useful to influence what odds to fetch, (game schedules, etc)
 
-Odds Investigation Breakdown:
+###Odds Investigation Breakdown:
  -List of sports on website. Also see document shared by Ryan on 10/25
  -Can do championship odds, as well game odds for each team. Can do h2h and spread
  -Will provide commencement time and such, so most likely does not need a game schedule to pull
  -Can pull sport transaction news (trades, signings, etc.), injury reports to see odds changing. Can provide important dates for future sentiment analysis
-Odds Jobs Breakdown:
+
+###Odds Jobs Breakdown:
   -Create Endpoints for Scheduler to connect to
     -Have users ask for sports, markets, and region
       -Sports list in doc
