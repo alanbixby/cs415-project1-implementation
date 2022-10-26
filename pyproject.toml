@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "py-reddit-stream-async"
+version = "0.1.0"
+description = ""
+authors = ["Alan Bixby <alanrbixby@gmail.com>"]
+readme = "README.md"
+packages = [{include = "py_reddit_stream_async"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+aiohttp = "^3.8.3" # Asynchronous Web Requests
+asyncio = "^3.4.3" # Asynchronous Python
+aiodns = "^3.0.0" # Faster DNS Resolving
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
