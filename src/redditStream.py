@@ -1,5 +1,10 @@
+import asyncio
+import collections
 import time
-from typing import Dict, List, Literal, Deque
+from typing import Deque, Dict, List, Literal
+
+import aiohttp
+from dateutil.parser import *
 
 from RedditTypings import (
     RedditComment,
@@ -7,10 +12,6 @@ from RedditTypings import (
     RedditOAuth2Response,
     RedditSubmission,
 )
-import aiohttp
-import asyncio
-from dateutil.parser import *
-import collections
 
 
 class RedditSubredditStream:
@@ -128,24 +129,28 @@ class RedditSubredditStream:
                     )
                 ]
                 for subreddit in subreddits:
+                    if is_first_page:
+                        break
+                    print(f"searching for {subreddit}")
                     if subreddit not in subreddit_stats:
                         subreddit_stats[
                             subreddit
                         ] = (
                             collections.deque()
-                        )  # TODO: replace this logic using DefaultDict
-                    subreddit_stats[subreddit].appendleft(
-                        len(
-                            [
-                                elem
-                                for elem in reddit_new_children
-                                if elem["subreddit"] == subreddit
-                            ]
-                        )
-                    )
+                        )  # TODO: replace this logic using OrderedDict and immediate rolling average
+                    subreddit_count = [
+                        elem
+                        for elem in reddit_new_children
+                        if elem["subreddit"].lower() == subreddit.lower()
+                    ]
+                    print(f"   {len(subreddit_count)} : in /r/{subreddit}")
+                    subreddit_stats[subreddit].appendleft(len(subreddit_count))
                 for child in reddit_new_children:
                     page_history[multireddit].appendleft(child["id"])
-                if len(reddit_new_children) >= 100 - overlap_threshold:
+                if (
+                    len(reddit_new_children) >= 100 - overlap_threshold
+                    and "_resetConfiguration" in page_history
+                ):
                     print("too big of bin!")
                     # Trigger Rebalance
                 if is_first_page and skip_first_page:
