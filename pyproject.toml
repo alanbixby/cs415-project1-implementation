@@ -11,6 +11,7 @@ python = "^3.11"
 aiohttp = "^3.8.3" # Asynchronous Web Requests
 asyncio = "^3.4.3" # Asynchronous Python
 aiodns = "^3.0.0" # Faster DNS Resolving
+python-decouple = "^3.6" # Use .env variables
 
 
 [build-system]
