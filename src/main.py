@@ -4,31 +4,25 @@ from time import sleep
 
 from decouple import config
 
-from redditStream import RedditSubredditStream
+from reddit_stream import RedditSubredditStream
 
 stream = RedditSubredditStream(
     config("REDDIT_USERNAME"),
     config("REDDIT_PASSWORD"),
     config("REDDIT_CLIENT_ID"),
     config("REDDIT_CLIENT_SECRET"),
-    ["politics"],
+    ["politics", "nfl", "cfb", "nba"],
+    overlap_threshold=15,
 )
 
-print(
-    json.dumps(
-        asyncio.run(
-            stream.fetch_multi_reddit(["politics", "askreddit"], "comments", skip_first_page=True)
-        ),
-        indent=2,
-    )
-)
-i = 0
-while True:
-    sleep(1)
-    new_stuff = asyncio.run(stream.fetch_multi_reddit(["politics", "askreddit"], "comments"))
-    new_stuff_ids = [elem["subreddit"] for elem in new_stuff]
-    print(f"{i}. {new_stuff_ids} <- new page")
-    i = i + 1
-    print()
-    if (i % 5 == 0):
-        print(stream.subreddit_comment_stats)
+
+async def printStream() -> None:
+    asyncio.create_task(stream.start_poll_subreddits())
+    i = 0
+    async for item in stream.poll_subreddits():
+        i = i + 1
+        print(item["subreddit"])
+        # add to database here
+
+
+asyncio.run(printStream())

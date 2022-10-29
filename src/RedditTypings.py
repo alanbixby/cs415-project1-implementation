@@ -1,15 +1,8 @@
+import time
+from datetime import datetime
 from typing import Any, List, Literal, TypedDict, Union
-from typing_extensions import NotRequired
 
-RedditOAuth2Response = TypedDict(
-    "RedditOAuth2Response",
-    {
-        "access_token": str,
-        "expires_in": int,
-        "scope": str,
-        "token_type": str,
-    },
-)
+from typing_extensions import NotRequired
 
 # Based on http://count.reddit-stream.com/api_info/comment and
 #          http://count.reddit-stream.com/api_info/thread
