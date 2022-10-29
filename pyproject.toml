@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "py-twitter-stream"
+version = "0.1.0"
+description = ""
+authors = ["Alan Bixby <alanrbixby@gmail.com>"]
+readme = "README.md"
+packages = [{include = "py_twitter_stream"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+aiohttp = "^3.8.3"
+pymongo = "^4.3.2"
+spacy = "^3.4.2"
+asyncio = "^3.4.3"
+aiodns = "^3.0.0"
+decouple = "^0.0.7"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
