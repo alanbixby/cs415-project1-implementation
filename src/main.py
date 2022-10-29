@@ -1,6 +1,6 @@
 from math import ceil
 import time
-from typing import TypedDict
+from typing import Any, AsyncGenerator, Awaitable, Callable, List, Optional
 import asyncio
 import aiohttp
 import json
@@ -35,18 +35,91 @@ class RatelimitError(Error):
 # Started 11:54AM 10/28/2022 - Alan Bixby
 class twitter_stream:
     bearer_token: str
-    data_queue: asyncio.Queue[TwitterResponse]
+    whitelisted_categories: List[str]
+    read_high_water_warning: int
+    process_high_water_warning: int
+    processing_queue: asyncio.Queue[TwitterResponse] = asyncio.Queue()
+    data_queue: asyncio.Queue[TwitterResponse] = asyncio.Queue()
 
-    def __init__(self, bearer_token: str) -> None:
+    def __init__(
+        self,
+        bearer_token: str,
+        whitelisted_categories: List[str] = [
+            "6",  # Sports Events
+            "11",  # Sport
+            "12",  # Sports Team
+            "26",  # Sports League
+            "27",  # American Football Game
+            "28",  # NFL Football Game
+            "39",  # Basketball Game
+            "40",  # Sports Series
+            "43",  # Soccer Match
+            "44",  # Baseball Game
+            "60",  # Athlete
+            "68",  # Hockey Game
+            "92",  # Sports Personality
+            "93",  # Coach (?) TODO: investigate if this is life coach vs sports coach
+            "137",  # eSports Team
+            "138",  # eSports Player
+            "149",  # eSports League
+        ],
+        process_high_water_warning: int = 250,
+        read_high_water_warning: int = 2500,
+    ) -> None:
         self.bearer_token = bearer_token
+        self.whitelisted_categories = whitelisted_categories
+        self.read_high_water_warning = read_high_water_warning
+        self.process_high_water_warning = process_high_water_warning
+
+    def check_process_queue(self) -> bool:
+        if self.processing_queue.qsize() > self.process_high_water_warning:
+            print(f"Processing queue is large! [{self.process_high_water_warning}]")
+            self.process_high_water_warning = self.process_high_water_warning * 2
+            return True
+        return False
+
+    def check_data_queue(self) -> bool:
+        if self.data_queue.qsize() > self.read_high_water_warning:
+            print(f"Processing queue is large! [{self.read_high_water_warning}]")
+            self.read_high_water_warning = self.read_high_water_warning * 2
+            return True
+        return False
+
+    async def stream_data_generator(self) -> AsyncGenerator[TwitterResponse, None]:
+        while True:
+            yield await self.data_queue.get()
+
+    async def process_queue_worker(
+        self, eval_func: Optional[Callable[[TwitterResponse], Awaitable[bool]]]
+    ) -> None:
+        while True:
+            self.check_data_queue()
+            tweet: Any = (
+                await self.processing_queue.get()
+            )  # TODO: Finish typing response (remove "Any")
+            context_annotations = tweet["data"].get("context_annotations", [])
+            if len(context_annotations) > 0:
+                context_ids = [
+                    annotation["domain"]["id"] for annotation in context_annotations
+                ]
+                if not set(self.whitelisted_categories).isdisjoint(context_ids):
+                    self.data_queue.put_nowait(tweet)  # send to output stream
+                    self.processing_queue.task_done()
+                    continue
+            # TODO: Handle other checks; potentially use spaCy for tokenizer and lemma processing -> matcher; or just use existing dictionary logic (or do nothing)
+            if eval_func is not None and await eval_func(tweet):
+                self.data_queue.put_nowait(tweet)
+            self.processing_queue.task_done()
+            continue
 
     async def start_stream(
-        self,
-        twitter_params: TwitterParams = {},
+        self, twitter_params: TwitterParams = {}, start_n_process_workers: int = 0
     ) -> None:  # AsyncGenerator[TwitterResponse, Any]:
         delay: float
         retry_count: int = 0
         last_success = time.monotonic()
+        for _ in range(start_n_process_workers):
+            asyncio.create_task(self.process_queue_worker())
         while True:
             try:
                 if retry_count > 0:
@@ -100,8 +173,10 @@ class twitter_stream:
                             if line_str == "":
                                 continue
                             parsed_json: TwitterResponse = json.loads(line_str)
-                            print(json.dumps(parsed_json, indent=1, ensure_ascii=False))
-                            # yield parsed_json
+                            # print(json.dumps(parsed_json, indent=1, ensure_ascii=False))
+                            # TODO: potentially send to a different queue, or just add to time-series directly from here for tracking ALL tweets
+                            self.processing_queue.put_nowait(parsed_json)
+                            self.check_process_queue()
 
             except aiohttp.ClientConnectionError:
                 """Back off linearly for TCP/IP level network errors. These problems are generally temporary and tend to clear quickly. Increase the delay in reconnects by 250ms each attempt, up to 16 seconds."""
@@ -130,23 +205,30 @@ class twitter_stream:
                 await asyncio.sleep(delay)
 
 
-stream: twitter_stream = twitter_stream(config("TWITTER_BEARER_TOKEN"))
-
-asyncio.run(
-    stream.start_stream(
-        twitter_params={
-            "tweet.fields": [
-                "context_annotations",
-                "text",
-                "author_id",
-                "conversation_id",
-                "created_at",
-                "entities",
-                "lang",
-                "public_metrics",
-            ],
-            "user.fields": ["id", "verified", "created_at"],
-            "place.fields": ["id", "country_code", "place_type", "full_name"],
-        }
+async def main() -> None:
+    stream: twitter_stream = twitter_stream(config("TWITTER_BEARER_TOKEN"))
+    asyncio.create_task(
+        stream.start_stream(
+            twitter_params={
+                "tweet.fields": [
+                    "context_annotations",
+                    "text",
+                    "author_id",
+                    "conversation_id",
+                    "created_at",
+                    "entities",
+                    "lang",
+                    "public_metrics",
+                ],
+                "user.fields": ["id", "verified", "created_at"],
+                "place.fields": ["id", "country_code", "place_type", "full_name"],
+            },
+            start_n_process_workers=3,
+        )
     )
-)
+    async for tweet in stream.stream_data_generator():
+        print(json.dumps(tweet, indent=1))
+        # TODO: make call to save to database; probably would be good to batch depending on how quickly tweets pop up
+
+
+asyncio.run(main())
