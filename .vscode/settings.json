@@ -12,5 +12,7 @@
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.organizeImports": true
-  }
+  },
+  "python.languageServer": "Pylance",
+  "python.defaultInterpreterPath": "/home/prod/.cache/pypoetry/virtualenvs/py-reddit-stream-async-VkfkcaB0-py3.11/bin/python"
 }

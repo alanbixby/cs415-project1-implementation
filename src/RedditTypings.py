@@ -306,7 +306,7 @@ class RedditCommentWrapper(TypedDict):
     data: RedditComment
 
 
-class RedditLinkWrapper(TypedDict):
+class RedditSubmissionWrapper(TypedDict):
     kind: Literal["t3"]
     data: RedditSubmission
 
@@ -316,7 +316,7 @@ class RedditListingData(TypedDict):
     dist: int
     modhash: str
     geo_filter: str
-    children: Union[List[RedditCommentWrapper], List[RedditLinkWrapper]]
+    children: Union[List[RedditCommentWrapper], List[RedditSubmissionWrapper]]
 
 
 class RedditListing(TypedDict):
