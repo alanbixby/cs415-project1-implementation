@@ -1,6 +1,5 @@
 import asyncio
 import collections
-import datetime
 import time
 from typing import (
     AsyncGenerator,
@@ -217,20 +216,27 @@ class RedditSubredditStream:
                             / time_delta,
                             "last_access": current_time,
                         }
-                    elif self.subreddit_stats[mode][subreddit].get("last_access", 0) > (current_time - 60):
+                    elif self.subreddit_stats[mode][subreddit].get("last_access", 0) > (
+                        current_time - 60
+                    ):
                         self.subreddit_stats[mode][subreddit] = {
-                            "avg_per_second": self.subreddit_stats[mode][subreddit]["avg_per_second"],
+                            "avg_per_second": self.subreddit_stats[mode][subreddit][
+                                "avg_per_second"
+                            ],
                             "last_access": current_time,
                         }
                     else:
                         self.subreddit_stats[mode][subreddit] = {
                             "avg_per_second": (
-                                ((len(subreddit_specific_new_data) / time_delta)
-                                + (
-                                    self.subreddit_stats[mode][subreddit][
-                                        "avg_per_second"
-                                    ]
-                                )) / 2
+                                (
+                                    (len(subreddit_specific_new_data) / time_delta)
+                                    + (
+                                        self.subreddit_stats[mode][subreddit][
+                                            "avg_per_second"
+                                        ]
+                                    )
+                                )
+                                / 2
                             ),
                             "last_access": current_time,
                         }
@@ -252,12 +258,11 @@ class RedditSubredditStream:
                     return []
                 return reddit_new_children
 
-
     def load_balance_subreddits(
         self,
         mode: Union[SubredditSearchMode, Literal["both"]],
     ) -> Tuple[List[float], List[List[str]]]:
-        """The joys of premature optimization; used /r/AskReddit as a reference point which made this seem necessary.. 
+        """The joys of premature optimization; used /r/AskReddit as a reference point which made this seem necessary..
         which happens to be among the most active subreddits, whereas most as very dead."""
         if mode == "both":
             self.load_balance_subreddits("new")
@@ -407,7 +412,7 @@ class RedditSubredditStream:
 
     async def populate_from_database(self) -> None:
         stats_col = self.client[self.db_name][self.collection_stats]
-        docs = stats_col.find({"disabled": { "$ne": True }})
+        docs = stats_col.find({"disabled": {"$ne": True}})
         async for doc in docs:
             for mode in ["new", "comments"]:
                 print(mode)
