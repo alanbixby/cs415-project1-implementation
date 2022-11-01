@@ -12,5 +12,6 @@
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.organizeImports": true
-  }
+  },
+  "python.defaultInterpreterPath": "/home/prod/.cache/pypoetry/virtualenvs/py-twitter-stream-iC3PoPu--py3.11/bin/python"
 }
