@@ -216,7 +216,7 @@ class RedditSubredditStream:
                             / time_delta,
                             "last_access": current_time,
                         }
-                    elif self.subreddit_stats[mode][subreddit].get("last_access", 0) > (
+                    elif self.subreddit_stats[mode][subreddit].get("last_access", 0) < (
                         current_time - 60
                     ):
                         self.subreddit_stats[mode][subreddit] = {

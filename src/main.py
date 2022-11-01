@@ -270,7 +270,7 @@ stream = RedditSubredditStream(
         "penguins",
         "leafs",
     ],
-    db_name="cs415_data_science" if os.getenv("IS_PROD") else "cs415_data_science_dev",
+    db_name=os.getenv("DB_NAME", "cs415_data_science_dev"),
     overlap_threshold=15,
 )
 
