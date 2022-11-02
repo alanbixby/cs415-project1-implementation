@@ -1,8 +1,9 @@
 import asyncio
 import os
-from dotenv import load_dotenv
-from custom_eval import custom_eval
 
+from dotenv import load_dotenv
+
+from custom_eval import custom_eval
 from twitter_stream import twitter_stream
 
 
@@ -10,9 +11,7 @@ async def main() -> None:
     load_dotenv()
     stream: twitter_stream = twitter_stream(
         os.environ["TWITTER_BEARER_TOKEN"],
-        db_name="cs415_data_science"
-        if os.getenv("IS_PROD")
-        else "cs415_data_science_dev",
+        db_name=os.getenv("DB_NAME", "cs415_data_science_dev"),
         eval_func=custom_eval,
     )
     asyncio.create_task(
@@ -43,8 +42,11 @@ async def main() -> None:
 
     collection = stream.client[stream.db_name][stream.collection_primary]
     async for tweet in stream.stream_data_generator():
-        print(tweet["id"], tweet["created_at"])  # type: ignore
-        collection.insert_one(tweet)
+        print(tweet["_id"], tweet["created_at"])  # type: ignore
+        try:
+          collection.insert_one(tweet)
+        except:
+          pass
 
 
 asyncio.run(main())

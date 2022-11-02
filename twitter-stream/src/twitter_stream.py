@@ -1,15 +1,15 @@
-from typing_extensions import NotRequired
-import motor.motor_asyncio
-from math import ceil
-import time
-from typing import Any, AsyncGenerator, Awaitable, Callable, List, Optional
 import asyncio
-import aiohttp
 import json
+import time
+from math import ceil
+from typing import Any, AsyncGenerator, Awaitable, Callable, List, Optional
 
-from twitter_typings import TwitterParams, TwitterResponse
+import aiohttp
+import motor.motor_asyncio
+from typing_extensions import NotRequired
 
 from datetime_parser import _JSONDecoder
+from twitter_typings import TwitterParams, TwitterResponse
 
 
 class Error(Exception):
@@ -116,7 +116,7 @@ class twitter_stream:
     ) -> None:
         collection = self.client[self.db_name][self.collection_counts]
         await collection.insert_one(
-            {"tweet_id": tweet["id"], "created_at": tweet["created_at"], "lang": tweet["lang"], "is_stored": is_stored}  # type: ignore
+            {"tweet_id": tweet["_id"], "created_at": tweet["created_at"], "lang": tweet["lang"], "is_stored": is_stored}  # type: ignore
         )
 
     async def process_queue_worker(self) -> None:
@@ -214,6 +214,7 @@ class twitter_stream:
                             if "includes" in parsed_json:
                                 parsed_json["data"]["includes"] = parsed_json.get("includes", {})  # type: ignore
                                 del parsed_json["includes"]  # type: ignore
+                            parsed_json["data"]["_id"] = parsed_json["data"].pop("id")
                             self.processing_queue.put_nowait(parsed_json["data"])  # type: ignore
                             self.check_process_queue()
 

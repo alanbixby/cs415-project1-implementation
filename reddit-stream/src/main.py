@@ -14,7 +14,7 @@ stream = RedditSubredditStream(
     password=os.environ["REDDIT_PASSWORD"],
     client_id=os.environ["REDDIT_CLIENT_ID"],
     client_secret=os.environ["REDDIT_CLIENT_SECRET"],
-    subreddits=[#"politics"],
+    subreddits=[  # "politics"],
         "politics",
         "collegebasketball",
         "angelsbaseball",
@@ -270,7 +270,7 @@ stream = RedditSubredditStream(
         "penguins",
         "leafs",
     ],
-    db_name="cs415_data_science" if os.getenv("IS_PROD") else "cs415_data_science_dev",
+    db_name=os.getenv("DB_NAME", "cs415_data_science_dev"),
     overlap_threshold=15,
 )
 
@@ -280,7 +280,11 @@ async def printStream() -> None:
     asyncio.create_task(stream.start_poll_subreddits())
     db = stream.client[stream.db_name]
     async for item in stream.poll_subreddits():
-        print(item["data"]["subreddit"], item["data"]["name"], "| comments" if item["kind"] == "t1" else "| submissions")
+        print(
+            item["data"]["subreddit"],
+            item["data"]["name"],
+            "| comments" if item["kind"] == "t1" else "| submissions",
+        )
         try:
             if item["kind"] == "t3":
                 submission = item["data"]
@@ -294,7 +298,9 @@ async def printStream() -> None:
                         "subreddit": submission["subreddit"].lower(),
                         "subreddit_id": submission["subreddit_id"],
                         "url": submission.get("url", ""),
-                        "url_overridden_by_dest": submission.get("url_overridden_by_dest", ""),
+                        "url_overridden_by_dest": submission.get(
+                            "url_overridden_by_dest", ""
+                        ),
                         "crosspost_parent": submission.get("crosspost_parent", ""),
                         "created_at": datetime.datetime.fromtimestamp(
                             submission["created_utc"]
@@ -322,5 +328,6 @@ async def printStream() -> None:
             pass
         except Exception as e:
             print(f"DBEXCEPTION {e}")  # TODO: 10/10 error handling
+
 
 asyncio.run(printStream())
